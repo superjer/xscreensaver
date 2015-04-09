@@ -5,7 +5,7 @@
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
  * documentation.  No representations are made about the suitability of this
- * software for any purpose.  It is provided "as is" without express or 
+ * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  *
  *
@@ -42,10 +42,16 @@
 #include "xpm-pixmap.h"
 #include "analogtv.h"
 
-#include "images/logo-50.xpm"
+#include "images/twitch-100.xpm"
 
 /* #define DEBUG 1 */
 /* #define USE_TEST_PATTERNS */
+
+#define WELCAMLINES 3
+
+static char welcamtext[WELCAMLINES][80] = {"Welcam!", "Stream starts soon",""};
+static int welcamline = 0;
+static int welcampos = 0;
 
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -53,7 +59,7 @@ enum {
   N_CHANNELS=12, /* Channels 2 through 13 on VHF */
   MAX_MULTICHAN=2,
   MAX_STATIONS=6
-}; 
+};
 
 typedef struct chansetting_s {
 
@@ -93,8 +99,9 @@ update_smpte_colorbars(analogtv_input *input)
   int col;
   int xpos, ypos;
   int black_ntsc[4];
+  int white_ntsc[4];
 
-  /* 
+  /*
      SMPTE is the society of motion picture and television engineers, and
      these are the standard color bars in the US. Following the partial spec
      at http://broadcastengineering.com/ar/broadcasting_inside_color_bars/
@@ -120,17 +127,18 @@ update_smpte_colorbars(analogtv_input *input)
   };
 
   analogtv_lcp_to_ntsc(0.0, 0.0, 0.0, black_ntsc);
+  analogtv_lcp_to_ntsc(1000.0, 1.0, 1.0, white_ntsc);
 
   analogtv_setup_sync(input, 1, 0);
   analogtv_setup_teletext(input);
 
   for (col=0; col<7; col++) {
-    analogtv_draw_solid_rel_lcp(input, col*(1.0/7.0), (col+1)*(1.0/7.0), 0.00, 0.68, 
-                                top_cb_table[col][0], 
+    analogtv_draw_solid_rel_lcp(input, col*(1.0/7.0), (col+1)*(1.0/7.0), 0.00, 0.68,
+                                top_cb_table[col][0],
                                 top_cb_table[col][1], top_cb_table[col][2]);
-    
-    analogtv_draw_solid_rel_lcp(input, col*(1.0/7.0), (col+1)*(1.0/7.0), 0.68, 0.75, 
-                                mid_cb_table[col][0], 
+
+    analogtv_draw_solid_rel_lcp(input, col*(1.0/7.0), (col+1)*(1.0/7.0), 0.68, 0.75,
+                                mid_cb_table[col][0],
                                 mid_cb_table[col][1], mid_cb_table[col][2]);
   }
 
@@ -155,30 +163,17 @@ update_smpte_colorbars(analogtv_input *input)
   ypos=ANALOGTV_V/5;
   xpos=ANALOGTV_VIS_START + ANALOGTV_VIS_LEN/2;
 
-  {
-    char localname[256];
-    if (gethostname (localname, sizeof (localname))==0) {
-      localname[sizeof(localname)-1]=0; /* "The returned name is null-
-                                           terminated unless insufficient 
-                                           space is provided" */
-      localname[24]=0; /* limit length */
+  analogtv_draw_string_centered(input, &st->ugly_font, welcamtext[0],
+                                xpos-1, ypos+1, black_ntsc);
+  analogtv_draw_string_centered(input, &st->ugly_font, welcamtext[0],
+                                xpos, ypos, white_ntsc);
 
-      analogtv_draw_string_centered(input, &st->ugly_font, localname,
-                                    xpos, ypos, black_ntsc);
-    }
-  }
   ypos += st->ugly_font.char_h*5/2;
 
   analogtv_draw_xpm(st->tv, input,
-                    logo_50_xpm, xpos - 100, ypos);
+                    twitch_100_xpm, xpos - 200, ypos);
 
   ypos += 58;
-
-#if 0
-  analogtv_draw_string_centered(input, &st->ugly_font,
-                                "Please Stand By", xpos, ypos);
-  ypos += st->ugly_font.char_h*4;
-#endif
 
   {
     char timestamp[256];
@@ -187,12 +182,25 @@ update_smpte_colorbars(analogtv_input *input)
 
     /* Y2K: It is OK for this to use a 2-digit year because it's simulating a
        TV display and is purely decorative. */
-    strftime(timestamp, sizeof(timestamp)-1, "%y.%m.%d %H:%M:%S ", tm);
+    /* Just kidding, we'll stop at 99 just to be safe. */
+    strftime(timestamp, sizeof(timestamp)-1, "%m/%d/99 %H:%M:%S ", tm);
     analogtv_draw_string_centered(input, &st->ugly_font, timestamp,
                                   xpos, ypos, black_ntsc);
   }
 
-  
+  ypos += 28;
+
+  analogtv_draw_string_centered(input, &st->ugly_font, welcamtext[1],
+                                xpos-1, ypos+1, black_ntsc);
+  analogtv_draw_string_centered(input, &st->ugly_font, welcamtext[1],
+                                xpos, ypos, white_ntsc);
+  ypos += 28;
+
+  analogtv_draw_string_centered(input, &st->ugly_font, welcamtext[2],
+                                xpos-1, ypos+1, black_ntsc);
+  analogtv_draw_string_centered(input, &st->ugly_font, welcamtext[2],
+                                xpos, ypos, white_ntsc);
+
   input->next_update_time += 1.0;
 }
 
@@ -204,7 +212,7 @@ draw_color_square(analogtv_input *input)
 
   analogtv_draw_solid_rel_lcp(input, 0.0, 1.0, 0.0, 1.0,
                               30.0, 0.0, 0.0);
-  
+
   for (xs=0.0; xs<0.9999; xs+=1.0/15.0) {
     analogtv_draw_solid_rel_lcp(input, xs, xs, 0.0, 1.0,
                                 100.0, 0.0, 0.0);
@@ -216,7 +224,7 @@ draw_color_square(analogtv_input *input)
   }
 
   for (ys=0.0; ys<0.9999; ys+=0.01) {
-    
+
     analogtv_draw_solid_rel_lcp(input, 0.0/15, 1.0/15, ys, ys+0.01,
                                 40.0, 45.0, 103.5*(1.0-ys) + 347.0*ys);
 
@@ -225,7 +233,7 @@ draw_color_square(analogtv_input *input)
   }
 
   for (ys=0.0; ys<0.9999; ys+=0.02) {
-    analogtv_draw_solid_rel_lcp(input, 1.0/15, 2.0/15, ys*2.0/11.0+1.0/11.0, 
+    analogtv_draw_solid_rel_lcp(input, 1.0/15, 2.0/15, ys*2.0/11.0+1.0/11.0,
                                 (ys+0.01)*2.0/11.0+1.0/11.0,
                                 100.0*(1.0-ys), 0.0, 0.0);
   }
@@ -352,7 +360,7 @@ static void image_loaded_cb (Screen *screen, Window window, Drawable pixmap,
       else s = name;
       st->chansettings[this].filename = strdup (s);
     }
-    fprintf(stderr, "%s: loaded channel %d, %s\n", progname, this, 
+    fprintf(stderr, "%s: loaded channel %d, %s\n", progname, this,
             st->chansettings[this].filename);
 #endif
   }
@@ -421,7 +429,7 @@ static void load_station_images(struct state *st)
     analogtv_input *input = st->stations[i];
 
     st->chansettings[i].image_loaded_p = True;
-    if (i == 0) {   /* station 0 is always colorbars */
+    if (i == 0 || 1) {   /* station 0 is always colorbars */
       input->updater = update_smpte_colorbars;
       input->do_teletext=1;
     }
@@ -452,7 +460,7 @@ xanalogtv_init (Display *dpy, Window window)
   if (delay < 1) delay = 1;
 
   analogtv_make_font(dpy, window, &st->ugly_font, 7, 10, "6x10");
-  
+
   st->dpy = dpy;
   st->window = window;
   st->tv=analogtv_allocate(dpy, window);
@@ -531,14 +539,13 @@ xanalogtv_draw (Display *dpy, Window window, void *closure)
   int curticks=getticks(st);
   double curtime=curticks*0.001;
 
-  if (st->change_now || 
-      (curticks >= st->change_ticks && st->tv->powerup > 10.0)) {
+  if (st->change_now /*||
+      (curticks >= st->change_ticks && st->tv->powerup > 10.0)*/) {
     st->change_now = 0;
     st->curinputi=(st->curinputi+1)%N_CHANNELS;
     st->cs = &st->chansettings[st->curinputi];
 #if 0
-    fprintf (stderr, "%s: channel %d, %s\n", progname, st->curinputi,
-             st->cs->filename);
+    fprintf (stderr, "%s: channel %d\n", progname, st->curinputi);
 #endif
     st->change_ticks = curticks + st->cs->dur;
     /* Set channel change noise flag */
@@ -573,7 +580,7 @@ xanalogtv_draw (Display *dpy, Window window, void *closure)
 }
 
 static void
-xanalogtv_reshape (Display *dpy, Window window, void *closure, 
+xanalogtv_reshape (Display *dpy, Window window, void *closure,
                  unsigned int w, unsigned int h)
 {
   struct state *st = (struct state *) closure;
@@ -586,21 +593,43 @@ xanalogtv_event (Display *dpy, Window window, void *closure, XEvent *event)
   struct state *st = (struct state *) closure;
 
   if (event->type == ButtonPress)
+  {
+    st->change_now = 1;
+    return True;
+  }
+  else if (event->type == KeyPress)
+  {
+    KeySym keysym;
+    char c = 0;
+    XLookupString (&event->xkey, &c, 1, &keysym, 0);
+    if (c >= 1 && c <= WELCAMLINES) /* ^A ^B ^C for line selection */
+    {
+      welcamline = c - 1;
+      welcampos = 0;
+    }
+    else if (c == '\b' )
+    {
+      if( welcampos > 0 )
+        welcampos--;
+      welcamtext[welcamline][welcampos] = '$';
+    }
+    else if (c == '\r' || c == '\n')
+    {
+      memset(welcamtext[welcamline] + welcampos, 0, 40);
+      welcampos = 0;
+    }
+    else if (c >= ' ' && c <= '~')
+    {
+      welcamtext[welcamline][welcampos] = c;
+      if( welcampos < 40 )
+        welcampos++;
+    }
+    else if (c == '\t')
     {
       st->change_now = 1;
       return True;
     }
-  else if (event->type == KeyPress)
-    {
-      KeySym keysym;
-      char c = 0;
-      XLookupString (&event->xkey, &c, 1, &keysym, 0);
-      if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
-        {
-          st->change_now = 1;
-          return True;
-        }
-    }
+  }
 
   return False;
 }

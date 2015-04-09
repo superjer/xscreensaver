@@ -325,7 +325,7 @@ analogtv_configure(analogtv *it)
     }
   else if (ratio > max_ratio)
     {
-      wlim = hlim*max_ratio;
+      /* wlim = hlim*max_ratio; */
 # ifdef DEBUG
       fprintf (stderr,
                "size: center H: %dx%d in %dx%d (%.3f < %.3f < %.3f)\n",
@@ -335,7 +335,7 @@ analogtv_configure(analogtv *it)
     }
   else /* ratio < min_ratio */
     {
-      hlim = wlim/min_ratio;
+      /* hlim = wlim/min_ratio; */
 # ifdef DEBUG
       fprintf (stderr,
                "size: center V: %dx%d in %dx%d (%.3f < %.3f < %.3f)\n",
@@ -2179,8 +2179,9 @@ analogtv_draw_xpm(analogtv *tv, analogtv_input *input,
       int ntsc[4];
       tvx=x*4+left;
       if (tvx<ANALOGTV_PIC_START || tvx+4>ANALOGTV_PIC_END) continue;
+      if (cmap[cbyte].r < 0 ) continue;
 
-      rawy=( 5*cmap[cbyte].r + 11*cmap[cbyte].g + 2*cmap[cbyte].b) / 64;
+      rawy=( 5*cmap[cbyte].r + 11*cmap[cbyte].g + 2*cmap[cbyte].b) / 56;
       rawi=(10*cmap[cbyte].r -  4*cmap[cbyte].g - 5*cmap[cbyte].b) / 64;
       rawq=( 3*cmap[cbyte].r -  8*cmap[cbyte].g + 5*cmap[cbyte].b) / 64;
 

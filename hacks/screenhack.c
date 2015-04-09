@@ -264,6 +264,8 @@ screenhack_handle_event_1 (Display *dpy, XEvent *event)
     {
     case KeyPress:
       {
+#if 0
+	break;
         KeySym keysym;
         char c = 0;
         XLookupString (&event->xkey, &c, 1, &keysym, 0);
@@ -274,6 +276,7 @@ screenhack_handle_event_1 (Display *dpy, XEvent *event)
           return False;  /* exit */
         else if (! (keysym >= XK_Shift_L && keysym <= XK_Hyper_R))
           XBell (dpy, 0);  /* beep for non-chord keys */
+#endif
       }
       break;
     case ButtonPress:
