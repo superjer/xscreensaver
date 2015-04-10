@@ -1298,6 +1298,7 @@ analogtv_draw(analogtv *it)
     {
       int totsignal=0;
       double ncl/*,diff*/;
+      int sqstart=ANALOGTV_VISLINES-16;
 
       for (i=0; i<ANALOGTV_PIC_LEN; i++) {
         totsignal += signal[i];
@@ -1306,7 +1307,7 @@ analogtv_draw(analogtv *it)
       ncl = 0.95 * it->crtload[lineno-1] +
         0.05*(baseload +
               (totsignal-30000)/100000.0 +
-              (slineno>184 ? (slineno-184)*(lineno-184)*0.001 * it->squeezebottom
+              (slineno>sqstart ? (slineno-sqstart)*(lineno-sqstart)*0.001 * it->squeezebottom
                : 0.0));
       /*diff=ncl - it->crtload[lineno];*/
       /*bigloadchange = (diff>0.01 || diff<-0.01);*/
